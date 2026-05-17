@@ -23,8 +23,8 @@ const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
 const pointsEl = document.getElementById('points');
 
-// Custom Toast Function for nice alerts
-function showToast(message, color = "#10b981") {
+// Custom Toast Function
+window.showToast = function(message, color = "#10b981") {
     const toast = document.createElement('div');
     toast.innerText = message;
     toast.style.position = 'fixed';
@@ -68,13 +68,14 @@ addTaskBtn.addEventListener('click', async () => {
             userId: currentUser.uid,
             title,
             completed: false,
+            failed: false,
             createdAt: new Date().getTime()
         });
 
         taskInput.value = '';
         addTaskBtn.innerText = 'Add';
         
-        showToast("Your task added successfully! ✨", "#10b981");
+        window.showToast("Your task added successfully! ✨", "#10b981");
         
     } catch (err) {
         alert("Error adding task: " + err.message);
@@ -87,45 +88,49 @@ function setupRealtimeTasks() {
     
     const q = query(
         collection(db, 'tasks'),
-        where('userId', '==', currentUser.uid),
-        where('completed', '==', false)
+        where('userId', '==', currentUser.uid)
     );
 
     // FAST RESPONSE: Listen for real-time updates!
     onSnapshot(q, (querySnapshot) => {
         taskList.innerHTML = '';
-
-        if (querySnapshot.empty) {
-            taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">No pending tasks. You are all caught up! 🎉</p>';
-            return;
-        }
+        let hasPending = false;
 
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
-            const div = document.createElement('div');
-            div.classList.add('card');
-            div.style.marginTop = '15px';
-            div.innerHTML = `
-              <div class="task" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                <h3 style="width: 100%; word-wrap: break-word;">${data.title}</h3>
-                <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
-                    
-                    <button onclick="completeTask('${docSnap.id}')" style="flex: 1; min-width: 80px;">
-                      Done ✅
-                    </button>
-                    
-                    <button onclick="failTask('${docSnap.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
-                      Not ❌
-                    </button>
+            
+            // Show only tasks that are NOT completed and NOT failed
+            if (data.completed === false && data.failed !== true) {
+                hasPending = true;
+                const div = document.createElement('div');
+                div.classList.add('card');
+                div.style.marginTop = '15px';
+                div.innerHTML = `
+                  <div class="task" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <h3 style="width: 100%; word-wrap: break-word;">${data.title}</h3>
+                    <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
+                        
+                        <button onclick="completeTask('${docSnap.id}')" style="flex: 1; min-width: 80px;">
+                          Done ✅
+                        </button>
+                        
+                        <button onclick="failTask('${docSnap.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
+                          Not ❌
+                        </button>
 
-                    <button onclick="deleteTask('${docSnap.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                      Delete 🗑️
-                    </button>
-                </div>
-              </div>
-            `;
-            taskList.appendChild(div);
+                        <button onclick="deleteTask('${docSnap.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                          Delete 🗑️
+                        </button>
+                    </div>
+                  </div>
+                `;
+                taskList.appendChild(div);
+            }
         });
+
+        if (!hasPending) {
+            taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">No pending tasks. You are all caught up! 🎉</p>';
+        }
     });
 }
 
@@ -133,14 +138,15 @@ window.completeTask = async (taskId) => {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         await updateDoc(taskRef, {
-            completed: true
+            completed: true,
+            completedAt: new Date().getTime()
         });
 
         const userRef = doc(db, 'users', currentUser.uid);
         await updateDoc(userRef, {
-            points: increment(10) // 10 XP per task!
+            points: increment(1) // Changed to +1 point as requested!
         });
-        showToast("Awesome! +10 XP 🌟", "#10b981");
+        window.showToast("Awesome! +1 Point 🌟", "#10b981");
     } catch (err) {
         alert("Error completing task: " + err.message);
     }
@@ -148,24 +154,22 @@ window.completeTask = async (taskId) => {
 
 window.failTask = async (taskId) => {
     try {
+        // Mark as failed instead of deleting. This ensures it lowers the completion % in the graph!
         const taskRef = doc(db, 'tasks', taskId);
-        await deleteDoc(taskRef);
-
-        const userRef = doc(db, 'users', currentUser.uid);
-        await updateDoc(userRef, {
-            points: increment(-5) // Penalty for "Not" done
+        await updateDoc(taskRef, {
+            failed: true 
         });
-        showToast("Task Missed! -5 XP 📉", "#f59e0b");
+        window.showToast("Task Missed! Graph % went down 📉", "#f59e0b");
     } catch (err) {
         alert("Error: " + err.message);
     }
 };
 
 window.deleteTask = async (taskId) => {
-    if(!confirm("Are you sure you want to delete this task?")) return;
+    if(!confirm("Are you sure you want to delete this task? It will be completely removed.")) return;
     try {
         await deleteDoc(doc(db, 'tasks', taskId));
-        showToast("Task Deleted 🗑️", "#ef4444");
+        window.showToast("Task Deleted 🗑️", "#ef4444");
     } catch (err) {
         alert("Error deleting task: " + err.message);
     }
