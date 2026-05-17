@@ -2,25 +2,25 @@ import { db } from './firebase.js';
 
 import {
     collection,
-    getDocs,
     query,
     orderBy,
-    limit
+    limit,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const leaderboard = document.getElementById('leaderboard');
 
-async function loadLeaderboard() {
+function setupRealtimeLeaderboard() {
     leaderboard.innerHTML = '<p style="color: #94a3b8; text-align: center;">Loading Top Grinders...</p>';
 
-    try {
-        const q = query(
-            collection(db, 'users'),
-            orderBy('points', 'desc'),
-            limit(10)
-        );
+    const q = query(
+        collection(db, 'users'),
+        orderBy('points', 'desc'),
+        limit(10)
+    );
 
-        const snapshot = await getDocs(q);
+    // FAST RESPONSE: Listen for real-time updates!
+    onSnapshot(q, (snapshot) => {
         leaderboard.innerHTML = '';
 
         if (snapshot.empty) {
@@ -56,9 +56,7 @@ async function loadLeaderboard() {
 
             rank++;
         });
-    } catch (err) {
-        leaderboard.innerHTML = `<p style="color: #ef4444; text-align: center;">Error loading leaderboard: ${err.message}</p>`;
-    }
+    });
 }
 
-loadLeaderboard();
+setupRealtimeLeaderboard();

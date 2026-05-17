@@ -12,10 +12,18 @@
 
     <div class="container">
 
-        <div class="text-center">
+        <div class="text-center" style="position: relative;">
             <img id="profilePhoto" class="profile-img" src="https://api.dicebear.com/8.x/avataaars/svg?seed=GrindXP" alt="Avatar">
             <h1 id="name">Loading...</h1>
             <p id="email">Loading...</p>
+        </div>
+
+        <div class="card" style="margin-top: 10px;">
+            <p style="margin-bottom: 15px; text-align: left; color: #e2e8f0; font-weight: 600;">Update Profile Picture</p>
+            <div class="flex-row">
+                <input type="text" id="photoUrlInput" placeholder="Paste image URL here...">
+                <button id="updatePhotoBtn" style="width: auto; padding: 0 20px;">Save</button>
+            </div>
         </div>
 
         <div class="card">
