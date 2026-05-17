@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Today's Tasks</h1>
+
+        <input type="text" id="taskInput" placeholder="Add New Habit">
+
+        <button id="addTaskBtn">Add Task</button>
+
+        <div id="taskList"></div>
+
+        <div class="card">
+            <h2>Total XP: <span id="points">0</span></h2>
+        </div>
+
+        <br>
+
+        <button onclick="window.location.href='leaderboard.html'">
+            Leaderboard
+        </button>
+
+        <br><br>
+
+        <button onclick="window.location.href='profile.html'">
+            Profile
+        </button>
+
+    </div>
+
+    <script type="module" src="js/dashboard.js"></script>
+
+</body>
+
+</html>
