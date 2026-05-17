@@ -9,12 +9,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "XXXX",
-    appId: "XXXX"
+    apiKey: "AIzaSyBQhGn6FZPRFQ4rhdYy7iaYC5kO9xWzpds",
+    authDomain: "daily-routing.firebaseapp.com",
+    projectId: "daily-routing",
+    storageBucket: "daily-routing.firebasestorage.app",
+    messagingSenderId: "329281719653",
+    appId: "1:329281719653:web:907855b4262bc9f35c658c"
 };
 
 const app = initializeApp(firebaseConfig);
