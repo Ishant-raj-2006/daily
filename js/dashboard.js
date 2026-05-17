@@ -114,43 +114,62 @@ function setupRealtimeTasks() {
             let titleStyle = "width: 100%; word-wrap: break-word;";
             let statusText = "";
             let bgStyle = "background: rgba(255, 255, 255, 0.03);";
+            let actionArea = "";
             
             if (data.completed) {
                 titleStyle += " text-decoration: line-through; color: #10b981;";
                 statusText = `<span style="color:#10b981; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">COMPLETED ✅</span>`;
                 bgStyle = "background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);";
+                
+                // Show +1 Point badge instead of Delete button for completed tasks
+                actionArea = `
+                    <div style="width: 100%; text-align: right; margin-top: 10px;">
+                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(16, 185, 129, 0.4); display: inline-block;">
+                            +1 Point 🌟
+                        </span>
+                    </div>
+                `;
+
             } else if (data.failed) {
                 titleStyle += " text-decoration: line-through; color: #f59e0b;";
                 statusText = `<span style="color:#f59e0b; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">MISSED ❌</span>`;
                 bgStyle = "background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);";
+                
+                // For failed tasks, show 0 Points badge
+                actionArea = `
+                    <div style="width: 100%; text-align: right; margin-top: 10px;">
+                        <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(245, 158, 11, 0.4); display: inline-block;">
+                            0 Points
+                        </span>
+                    </div>
+                `;
+
             } else {
                 statusText = `<span style="color:#94a3b8; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">PENDING ⏳</span>`;
+                
+                // For pending tasks, show all buttons
+                actionArea = `
+                    <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap; margin-top: 10px;">
+                        <button onclick="completeTask('${data.id}')" style="flex: 1; min-width: 80px;">
+                          Done ✅
+                        </button>
+                        <button onclick="failTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
+                          Not ❌
+                        </button>
+                        <button onclick="deleteTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                          Delete 🗑️
+                        </button>
+                    </div>
+                `;
             }
 
             div.style.cssText = `${bgStyle} padding: 20px; margin-top: 15px; border-radius: 18px; transition: transform 0.3s ease;`;
-
-            let buttonsHTML = '';
-            if (!data.completed && !data.failed) {
-                buttonsHTML = `
-                    <button onclick="completeTask('${data.id}')" style="flex: 1; min-width: 80px;">
-                      Done ✅
-                    </button>
-                    <button onclick="failTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
-                      Not ❌
-                    </button>
-                `;
-            }
 
             div.innerHTML = `
               <div class="task" style="flex-direction: column; align-items: flex-start; gap: 5px;">
                 ${statusText}
                 <h3 style="${titleStyle}">${data.title}</h3>
-                <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap; margin-top: 10px;">
-                    ${buttonsHTML}
-                    <button onclick="deleteTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                      Delete 🗑️
-                    </button>
-                </div>
+                ${actionArea}
               </div>
             `;
             taskList.appendChild(div);
