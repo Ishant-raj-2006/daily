@@ -9,7 +9,8 @@ import {
     doc,
     updateDoc,
     increment,
-    getDoc
+    getDoc,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -38,6 +39,7 @@ addTaskBtn.addEventListener('click', async () => {
     if (!title) return;
 
     try {
+        addTaskBtn.innerText = '...';
         await addDoc(collection(db, 'tasks'), {
             userId: currentUser.uid,
             title,
@@ -45,9 +47,11 @@ addTaskBtn.addEventListener('click', async () => {
         });
 
         taskInput.value = '';
+        addTaskBtn.innerText = 'Add';
         loadTasks();
     } catch (err) {
         alert("Error adding task: " + err.message);
+        addTaskBtn.innerText = 'Add';
     }
 });
 
@@ -76,9 +80,14 @@ async function loadTasks() {
         div.innerHTML = `
           <div class="task">
             <h3>${data.title}</h3>
-            <button onclick="completeTask('${docSnap.id}')">
-              Done ✅
-            </button>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="completeTask('${docSnap.id}')">
+                  Done ✅
+                </button>
+                <button onclick="deleteTask('${docSnap.id}')" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                  🗑️
+                </button>
+            </div>
           </div>
         `;
         taskList.appendChild(div);
@@ -101,6 +110,16 @@ window.completeTask = async (taskId) => {
         loadUser();
     } catch (err) {
         alert("Error completing task: " + err.message);
+    }
+};
+
+window.deleteTask = async (taskId) => {
+    if(!confirm("Are you sure you want to delete this task?")) return;
+    try {
+        await deleteDoc(doc(db, 'tasks', taskId));
+        loadTasks();
+    } catch (err) {
+        alert("Error deleting task: " + err.message);
     }
 };
 

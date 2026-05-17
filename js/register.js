@@ -24,6 +24,9 @@ registerBtn.addEventListener('click', async () => {
     }
 
     try {
+        registerBtn.innerText = 'Registering...';
+        registerBtn.disabled = true;
+
         const userCredential = await createUserWithEmailAndPassword(
             auth,
             email,
@@ -43,9 +46,17 @@ registerBtn.addEventListener('click', async () => {
             profilePhoto: `https://api.dicebear.com/8.x/avataaars/svg?seed=${seed}`
         });
 
-        window.location.href = 'dashboard.html';
+        // Show success directly on the button for 1 second!
+        registerBtn.innerText = 'Registration Successful! ✅';
+        registerBtn.style.background = 'linear-gradient(135deg, #10b981, #34d399)';
+
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
 
     } catch (error) {
         alert(error.message);
+        registerBtn.innerText = 'Register';
+        registerBtn.disabled = false;
     }
 });
