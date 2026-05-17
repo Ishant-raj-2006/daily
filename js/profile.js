@@ -42,6 +42,13 @@ onAuthStateChanged(auth, (user) => {
                 document.getElementById('email').innerText = data.email || 'No Email';
                 document.getElementById('phone').innerText = data.phone || 'N/A';
                 document.getElementById('joinDate').innerText = data.joinDate || 'N/A';
+                
+                // Add Current Date as requested
+                const today = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                document.getElementById('currentDate').innerText = today;
+                
                 document.getElementById('points').innerText = data.points || 0;
                 
                 const profilePhoto = document.getElementById('profilePhoto');
@@ -106,7 +113,7 @@ function setupRealtimeGraph() {
             const task = docSnap.data();
             
             // Only count if within current week and not explicitly deleted
-            if (task.createdAt && task.createdAt >= startOfWeek.getTime()) {
+            if (task.createdAt && task.createdAt >= startOfWeek.getTime() && task.deleted !== true) {
                 const date = new Date(task.createdAt);
                 let day = date.getDay() - 1;
                 if (day === -1) day = 6;

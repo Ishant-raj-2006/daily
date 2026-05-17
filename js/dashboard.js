@@ -23,7 +23,6 @@ const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
 const pointsEl = document.getElementById('points');
 
-// Custom Toast Function
 window.showToast = function(message, color = "#10b981") {
     const toast = document.createElement('div');
     toast.innerText = message;
@@ -94,42 +93,71 @@ function setupRealtimeTasks() {
     // FAST RESPONSE: Listen for real-time updates!
     onSnapshot(q, (querySnapshot) => {
         taskList.innerHTML = '';
-        let hasPending = false;
+        let hasTasks = false;
 
+        // Convert to array and sort by createdAt descending (newest first)
+        const tasksArray = [];
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
-            
-            // Show only tasks that are NOT completed and NOT failed
-            if (data.completed === false && data.failed !== true) {
-                hasPending = true;
-                const div = document.createElement('div');
-                div.classList.add('card');
-                div.style.marginTop = '15px';
-                div.innerHTML = `
-                  <div class="task" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                    <h3 style="width: 100%; word-wrap: break-word;">${data.title}</h3>
-                    <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
-                        
-                        <button onclick="completeTask('${docSnap.id}')" style="flex: 1; min-width: 80px;">
-                          Done ✅
-                        </button>
-                        
-                        <button onclick="failTask('${docSnap.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
-                          Not ❌
-                        </button>
-
-                        <button onclick="deleteTask('${docSnap.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                          Delete 🗑️
-                        </button>
-                    </div>
-                  </div>
-                `;
-                taskList.appendChild(div);
+            if (data.deleted !== true) {
+                tasksArray.push({ id: docSnap.id, ...data });
             }
         });
 
-        if (!hasPending) {
-            taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">No pending tasks. You are all caught up! 🎉</p>';
+        tasksArray.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        tasksArray.forEach((data) => {
+            hasTasks = true;
+            const div = document.createElement('div');
+            div.classList.add('card');
+            
+            let titleStyle = "width: 100%; word-wrap: break-word;";
+            let statusText = "";
+            let bgStyle = "background: rgba(255, 255, 255, 0.03);";
+            
+            if (data.completed) {
+                titleStyle += " text-decoration: line-through; color: #10b981;";
+                statusText = `<span style="color:#10b981; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">COMPLETED ✅</span>`;
+                bgStyle = "background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);";
+            } else if (data.failed) {
+                titleStyle += " text-decoration: line-through; color: #f59e0b;";
+                statusText = `<span style="color:#f59e0b; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">MISSED ❌</span>`;
+                bgStyle = "background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);";
+            } else {
+                statusText = `<span style="color:#94a3b8; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">PENDING ⏳</span>`;
+            }
+
+            div.style.cssText = `${bgStyle} padding: 20px; margin-top: 15px; border-radius: 18px; transition: transform 0.3s ease;`;
+
+            let buttonsHTML = '';
+            if (!data.completed && !data.failed) {
+                buttonsHTML = `
+                    <button onclick="completeTask('${data.id}')" style="flex: 1; min-width: 80px;">
+                      Done ✅
+                    </button>
+                    <button onclick="failTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
+                      Not ❌
+                    </button>
+                `;
+            }
+
+            div.innerHTML = `
+              <div class="task" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                ${statusText}
+                <h3 style="${titleStyle}">${data.title}</h3>
+                <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap; margin-top: 10px;">
+                    ${buttonsHTML}
+                    <button onclick="deleteTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                      Delete 🗑️
+                    </button>
+                </div>
+              </div>
+            `;
+            taskList.appendChild(div);
+        });
+
+        if (!hasTasks) {
+            taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">No tasks found. Add a new habit above! 🎉</p>';
         }
     });
 }
@@ -144,7 +172,7 @@ window.completeTask = async (taskId) => {
 
         const userRef = doc(db, 'users', currentUser.uid);
         await updateDoc(userRef, {
-            points: increment(1) // Changed to +1 point as requested!
+            points: increment(1) 
         });
         window.showToast("Awesome! +1 Point 🌟", "#10b981");
     } catch (err) {
@@ -154,7 +182,6 @@ window.completeTask = async (taskId) => {
 
 window.failTask = async (taskId) => {
     try {
-        // Mark as failed instead of deleting. This ensures it lowers the completion % in the graph!
         const taskRef = doc(db, 'tasks', taskId);
         await updateDoc(taskRef, {
             failed: true 

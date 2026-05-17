@@ -36,13 +36,18 @@ registerBtn.addEventListener('click', async () => {
         const user = userCredential.user;
         const seed = name.trim().replace(/\s+/g, '') || 'GrindXP';
 
+        // Properly formatted date: e.g., "May 17, 2026"
+        const formattedDate = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
         await setDoc(doc(db, 'users', user.uid), {
             name,
             email,
             phone,
             points: 0,
             streak: 0,
-            joinDate: new Date().toDateString(),
+            joinDate: formattedDate,
             profilePhoto: `https://api.dicebear.com/8.x/avataaars/svg?seed=${seed}`
         });
 
