@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Leaderboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - GrindXP</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -10,9 +12,20 @@
 
     <div class="container">
 
-        <h1>Leaderboard</h1>
+        <div class="text-center">
+            <h1>🏆 Top Grinders</h1>
+            <p>See who's leading the pack</p>
+        </div>
 
-        <div id="leaderboard"></div>
+        <div class="card" style="padding: 10px 0;">
+            <div id="leaderboard">
+                <!-- Leaderboard items will be injected here -->
+            </div>
+        </div>
+
+        <button class="btn-secondary" style="margin-top: 30px;" onclick="window.location.href='dashboard.html'">
+            ⬅ Back to Dashboard
+        </button>
 
     </div>
 

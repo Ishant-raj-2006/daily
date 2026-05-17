@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GrindXP</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -10,29 +12,31 @@
 
     <div class="container">
 
-        <h1>Today's Tasks</h1>
+        <h1 style="text-align: left;">Daily Quests</h1>
+        <p style="text-align: left; margin-bottom: 10px;">Crush your goals and earn XP</p>
 
-        <input type="text" id="taskInput" placeholder="Add New Habit">
-
-        <button id="addTaskBtn">Add Task</button>
-
-        <div id="taskList"></div>
-
-        <div class="card">
-            <h2>Total XP: <span id="points">0</span></h2>
+        <div class="flex-row">
+            <input type="text" id="taskInput" placeholder="Add a new habit...">
+            <button id="addTaskBtn" style="width: auto; padding: 0 25px;">Add</button>
         </div>
 
-        <br>
+        <div class="stat-box">
+            <h2><span id="points">0</span> XP</h2>
+            <p>Total Experience</p>
+        </div>
 
-        <button onclick="window.location.href='leaderboard.html'">
-            Leaderboard
-        </button>
+        <div id="taskList" style="margin-top: 20px;">
+            <!-- Tasks will be injected here -->
+        </div>
 
-        <br><br>
-
-        <button onclick="window.location.href='profile.html'">
-            Profile
-        </button>
+        <div class="flex-row" style="margin-top: 30px;">
+            <button class="btn-secondary" onclick="window.location.href='leaderboard.html'">
+                🏆 Leaderboard
+            </button>
+            <button class="btn-secondary" onclick="window.location.href='profile.html'">
+                👤 Profile
+            </button>
+        </div>
 
     </div>
 

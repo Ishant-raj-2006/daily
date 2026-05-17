@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Profile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - GrindXP</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -10,21 +12,31 @@
 
     <div class="container">
 
-        <center>
+        <div class="text-center">
+            <img id="profilePhoto" class="profile-img" src="https://api.dicebear.com/8.x/avataaars/svg?seed=GrindXP" alt="Avatar">
+            <h1 id="name">Loading...</h1>
+            <p id="email">Loading...</p>
+        </div>
 
-            <img id="profilePhoto" class="profile-img">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="color: #94a3b8;">Phone:</span>
+                <span id="phone" style="font-weight: 600;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #94a3b8;">Joined:</span>
+                <span id="joinDate" style="font-weight: 600;">-</span>
+            </div>
+        </div>
 
-            <h1 id="name"></h1>
+        <div class="stat-box" style="margin-top: 20px;">
+            <h2><span id="points">0</span> XP</h2>
+            <p>Total Experience</p>
+        </div>
 
-            <p id="email"></p>
-
-            <p id="phone"></p>
-
-            <p id="joinDate"></p>
-
-            <h2>Total XP: <span id="points"></span></h2>
-
-        </center>
+        <button class="btn-secondary" style="margin-top: 30px;" onclick="window.location.href='dashboard.html'">
+            ⬅ Back to Dashboard
+        </button>
 
     </div>
 

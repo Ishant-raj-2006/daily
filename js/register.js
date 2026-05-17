@@ -18,8 +18,12 @@ registerBtn.addEventListener('click', async () => {
     const phone = document.getElementById('phone').value;
     const password = document.getElementById('password').value;
 
-    try {
+    if (!name || !email || !password) {
+        alert("Please fill in all required fields!");
+        return;
+    }
 
+    try {
         const userCredential = await createUserWithEmailAndPassword(
             auth,
             email,
@@ -27,6 +31,7 @@ registerBtn.addEventListener('click', async () => {
         );
 
         const user = userCredential.user;
+        const seed = name.trim().replace(/\s+/g, '') || 'GrindXP';
 
         await setDoc(doc(db, 'users', user.uid), {
             name,
@@ -35,10 +40,8 @@ registerBtn.addEventListener('click', async () => {
             points: 0,
             streak: 0,
             joinDate: new Date().toDateString(),
-            profilePhoto: 'assets/default.png'
+            profilePhoto: `https://api.dicebear.com/8.x/avataaars/svg?seed=${seed}`
         });
-
-        alert('Registration Successful');
 
         window.location.href = 'dashboard.html';
 
