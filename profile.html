@@ -1,45 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - GrindXP</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-    <div class="container">
+    <div class="container" style="max-width: 550px;"> <!-- Made wider for charts -->
 
         <div class="text-center" style="position: relative;">
             <img id="profilePhoto" class="profile-img" src="https://api.dicebear.com/8.x/avataaars/svg?seed=GrindXP" alt="Avatar">
             <h1 id="name">Loading...</h1>
-            <p id="email">Loading...</p>
+            <p id="username" style="color: #a855f7; font-weight: 600; margin-top: -10px;">@username</p>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Personal Details</h3>
+            <div class="detail-row">
+                <span>Email:</span> <span id="email">-</span>
+            </div>
+            <div class="detail-row">
+                <span>Phone:</span> <span id="phone">-</span>
+            </div>
+            <div class="detail-row">
+                <span>Joined:</span> <span id="joinDate">-</span>
+            </div>
+            <div class="detail-row">
+                <span>Total XP:</span> <span id="points" style="color:#fbbf24; font-weight:bold;">0</span>
+            </div>
         </div>
 
         <div class="card" style="margin-top: 10px;">
-            <p style="margin-bottom: 15px; text-align: left; color: #e2e8f0; font-weight: 600;">Update Profile Picture</p>
+            <p style="margin-bottom: 10px; text-align: left; color: #e2e8f0; font-weight: 600;">Update Profile Picture URL</p>
             <div class="flex-row">
                 <input type="text" id="photoUrlInput" placeholder="Paste image URL here...">
                 <button id="updatePhotoBtn" style="width: auto; padding: 0 20px;">Save</button>
             </div>
         </div>
 
+        <!-- Weekly Performance Graph -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="color: #94a3b8;">Phone:</span>
-                <span id="phone" style="font-weight: 600;">-</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span style="color: #94a3b8;">Joined:</span>
-                <span id="joinDate" style="font-weight: 600;">-</span>
+            <h3 style="margin-bottom: 15px;">Weekly Performance</h3>
+            <canvas id="weeklyChart"></canvas>
+        </div>
+
+        <!-- Daily Activity Heatmap -->
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Daily Activity Heatmap</h3>
+            <div class="heatmap" id="heatmap">
+                <!-- Heatmap boxes will be injected here -->
             </div>
         </div>
 
-        <div class="stat-box" style="margin-top: 20px;">
-            <h2><span id="points">0</span> XP</h2>
-            <p>Total Experience</p>
+        <!-- Account Security Section -->
+        <div class="card">
+            <h3 style="margin-bottom: 15px; color: #ef4444;">Account Security</h3>
+            
+            <p style="font-weight: 600; margin-bottom: 10px; color: #cbd5e1; text-align: left;">Change Password</p>
+            <input type="email" id="cpEmail" placeholder="Confirm Email">
+            <input type="password" id="cpCurrent" placeholder="Current Password">
+            <input type="password" id="cpNew" placeholder="New Password">
+            <input type="password" id="cpConfirm" placeholder="Re-enter New Password">
+            <button id="changePasswordBtn" style="margin-bottom: 20px;">Update Password</button>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button id="exportDataBtn" class="btn-secondary" style="margin-top: 0;">📦 Export Data</button>
+                <button id="logoutBtn" style="margin-top: 0; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">🚪 Logout</button>
+            </div>
+            
+            <button id="deleteAccountBtn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); margin-top: 10px;">
+                ⚠️ Delete Account
+            </button>
         </div>
 
         <button class="btn-secondary" style="margin-top: 30px;" onclick="window.location.href='dashboard.html'">
@@ -48,8 +82,33 @@
 
     </div>
 
+    <!-- Custom Toast Function for alerts -->
+    <script>
+        window.showToast = function(message, color = "#10b981") {
+            const toast = document.createElement('div');
+            toast.innerText = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.background = color;
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '12px';
+            toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+            toast.style.fontWeight = '600';
+            toast.style.zIndex = '9999';
+            toast.style.transition = 'opacity 0.4s ease';
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 2500);
+        }
+    </script>
     <script type="module" src="js/profile.js"></script>
 
 </body>
-
 </html>

@@ -270,3 +270,37 @@ a:hover {
     font-weight: 800;
     font-size: 18px;
 }
+
+/* Profile details */
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    font-size: 15px;
+}
+.detail-row:last-child {
+    border-bottom: none;
+}
+.detail-row span:last-child {
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+/* Heatmap styles */
+.heatmap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.heat-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+.heat-1 { background: #0e4429; }
+.heat-2 { background: #006d32; }
+.heat-3 { background: #26a641; }
+.heat-4 { background: #39d353; }
