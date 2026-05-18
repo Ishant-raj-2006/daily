@@ -48,6 +48,7 @@ onAuthStateChanged(auth, (user) => {
                 document.getElementById('email').innerText = data.email || 'N/A';
                 document.getElementById('phone').innerText = data.phone || 'N/A';
                 
+                // Format joinDate to DD-MM-YYYY
                 let jDateStr = data.joinDate;
                 if (jDateStr) {
                     let d = new Date(jDateStr);
@@ -55,16 +56,17 @@ onAuthStateChanged(auth, (user) => {
                         let dd = String(d.getDate()).padStart(2, '0');
                         let mm = String(d.getMonth() + 1).padStart(2, '0');
                         let yyyy = d.getFullYear();
-                        jDateStr = `${dd}/${mm}/${yyyy}`;
+                        jDateStr = `${dd}-${mm}-${yyyy}`;
                     }
                 }
                 document.getElementById('joinDate').innerText = jDateStr || 'N/A';
                 
+                // Format current date to DD-MM-YY
                 const d2 = new Date();
                 let dd2 = String(d2.getDate()).padStart(2, '0');
                 let mm2 = String(d2.getMonth() + 1).padStart(2, '0');
                 let yy = String(d2.getFullYear()).slice(-2);
-                document.getElementById('currentDate').innerText = `${dd2}/${mm2}/${yy}`;
+                document.getElementById('currentDate').innerText = `${dd2}-${mm2}-${yy}`;
                 
                 document.getElementById('points').innerText = data.points || 0;
                 
@@ -86,7 +88,7 @@ onAuthStateChanged(auth, (user) => {
 
 // Toggle Photo Menu
 const photoMenu = document.getElementById('photoMenu');
-const updatePhotoCard = document.getElementById('updatePhotoCard');
+const hiddenPhotoInput = document.getElementById('hiddenPhotoInput');
 
 document.getElementById('profilePhoto').addEventListener('click', () => {
     photoMenu.style.display = photoMenu.style.display === 'none' || photoMenu.style.display === '' ? 'block' : 'none';
@@ -99,10 +101,10 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Show Update Photo Form
+// Directly Open File Picker when clicking "Update Photo"
 document.getElementById('menuUpdatePhoto').addEventListener('click', () => {
     photoMenu.style.display = 'none';
-    updatePhotoCard.style.display = 'block';
+    hiddenPhotoInput.click();
 });
 
 // Handle Delete Photo
@@ -121,21 +123,14 @@ document.getElementById('menuDeletePhoto').addEventListener('click', async () =>
     }
 });
 
-// Update Profile Photo via File Upload (Storage)
-document.getElementById('updatePhotoBtn').addEventListener('click', async () => {
-    const fileInput = document.getElementById('photoFileInput');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        window.showToast("Please select an image file first!", "#ef4444");
-        return;
-    }
+// Upload file automatically when user selects a file from the picker
+hiddenPhotoInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
     if (!currentUser) return;
     
     try {
-        const btn = document.getElementById('updatePhotoBtn');
-        btn.innerText = 'Uploading...';
-        btn.disabled = true;
+        window.showToast("Uploading photo... Please wait ⏳", "#f59e0b");
         
         // Upload to Firebase Storage
         const fileExt = file.name.split('.').pop();
@@ -147,21 +142,12 @@ document.getElementById('updatePhotoBtn').addEventListener('click', async () => 
         const userRef = doc(db, 'users', currentUser.uid);
         await updateDoc(userRef, { profilePhoto: photoUrl });
         
-        fileInput.value = '';
-        btn.innerText = 'Saved ✅';
-        window.showToast("Profile Photo Updated!", "#10b981");
-        
-        setTimeout(() => { 
-            btn.innerText = 'Upload'; 
-            btn.disabled = false;
-            updatePhotoCard.style.display = 'none';
-        }, 2000);
+        hiddenPhotoInput.value = '';
+        window.showToast("Profile Photo Updated! ✅", "#10b981");
         
     } catch (err) {
         window.showToast("Error updating photo: " + err.message, "#ef4444");
-        const btn = document.getElementById('updatePhotoBtn');
-        btn.innerText = 'Upload';
-        btn.disabled = false;
+        hiddenPhotoInput.value = '';
     }
 });
 

@@ -22,6 +22,7 @@
                     <button id="menuUpdatePhoto" style="margin-top: 0; margin-bottom: 5px; padding: 10px; font-size: 14px;">📸 Update Photo</button>
                     <button id="menuDeletePhoto" style="margin-top: 0; padding: 10px; font-size: 14px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4);">🗑️ Delete Photo</button>
                 </div>
+                <input type="file" id="hiddenPhotoInput" accept="image/*" style="display: none;">
             </div>
             <h1 id="name"> Loading... </h1>
             <p id="username" style="color: #a855f7; font-weight: 600; margin-top: -10px;">@username</p>
@@ -46,15 +47,7 @@
             </div>
         </div>
 
-        <div class="card" id="updatePhotoCard" style="margin-top: 10px; display: none;">
-            <p style="margin-bottom: 10px; text-align: left; color: #e2e8f0; font-weight: 600;">Upload New Picture
-            </p>
-            <div class="flex-row">
-                <input type="file" id="photoFileInput" accept="image/*"
-                    style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
-                <button id="updatePhotoBtn" style="width: auto; padding: 0 20px;">Upload</button>
-            </div>
-        </div>
+
 
         <!-- Weekly Performance Graph -->
         <div class="card">
