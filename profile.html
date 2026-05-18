@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - GrindXP</title>
+    <title>Profile - Daliy</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
     <div class="container" style="max-width: 550px;">
 
         <div class="text-center" style="position: relative;">
-            <img id="profilePhoto" class="profile-img" src="https://api.dicebear.com/8.x/avataaars/svg?seed=GrindXP" alt="Avatar">
-            <h1 id="name">Loading...</h1>
+            <div style="position: relative; display: inline-block;">
+                <img id="profilePhoto" class="profile-img" src="https://api.dicebear.com/8.x/avataaars/svg?seed=GrindXP"
+                    alt="Avatar" style="cursor: pointer;" title="Click to manage photo">
+                
+                <div id="photoMenu" style="display: none; position: absolute; top: 110%; left: 50%; transform: translateX(-50%); background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; z-index: 100; min-width: 150px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px);">
+                    <button id="menuUpdatePhoto" style="margin-top: 0; margin-bottom: 5px; padding: 10px; font-size: 14px;">📸 Update Photo</button>
+                    <button id="menuDeletePhoto" style="margin-top: 0; padding: 10px; font-size: 14px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4);">🗑️ Delete Photo</button>
+                </div>
+            </div>
+            <h1 id="name"> Loading... </h1>
             <p id="username" style="color: #a855f7; font-weight: 600; margin-top: -10px;">@username</p>
         </div>
 
@@ -32,15 +42,17 @@
                 <span>Current Date:</span> <span id="currentDate">-</span>
             </div>
             <div class="detail-row">
-                <span>Total XP:</span> <span id="points" style="color:#fbbf24; font-weight:bold;">0</span>
+                <span>Total Points :</span> <span id="points" style="color:#fbbf24; font-weight:bold;">0</span>
             </div>
         </div>
 
-        <div class="card" style="margin-top: 10px;">
-            <p style="margin-bottom: 10px; text-align: left; color: #e2e8f0; font-weight: 600;">Update Profile Picture URL</p>
+        <div class="card" id="updatePhotoCard" style="margin-top: 10px; display: none;">
+            <p style="margin-bottom: 10px; text-align: left; color: #e2e8f0; font-weight: 600;">Upload New Picture
+            </p>
             <div class="flex-row">
-                <input type="text" id="photoUrlInput" placeholder="Paste image URL here...">
-                <button id="updatePhotoBtn" style="width: auto; padding: 0 20px;">Save</button>
+                <input type="file" id="photoFileInput" accept="image/*"
+                    style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+                <button id="updatePhotoBtn" style="width: auto; padding: 0 20px;">Upload</button>
             </div>
         </div>
 
@@ -61,7 +73,7 @@
         <!-- Account Security Section -->
         <div class="card">
             <h3 style="margin-bottom: 15px; color: #ef4444;">Account Security</h3>
-            
+
             <p style="font-weight: 600; margin-bottom: 10px; color: #cbd5e1; text-align: left;">Change Password</p>
             <input type="email" id="cpEmail" placeholder="Confirm Email">
             <input type="password" id="cpCurrent" placeholder="Current Password">
@@ -71,10 +83,13 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button id="exportDataBtn" class="btn-secondary" style="margin-top: 0;">📦 Export Data</button>
-                <button id="logoutBtn" style="margin-top: 0; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">🚪 Logout</button>
+                <button id="logoutBtn"
+                    style="margin-top: 0; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">🚪
+                    Logout</button>
             </div>
-            
-            <button id="deleteAccountBtn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); margin-top: 10px;">
+
+            <button id="deleteAccountBtn"
+                style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); margin-top: 10px;">
                 ⚠️ Delete Account
             </button>
         </div>
@@ -87,7 +102,7 @@
 
     <!-- Custom Toast Function for alerts -->
     <script>
-        window.showToast = function(message, color = "#10b981") {
+        window.showToast = function (message, color = "#10b981") {
             const toast = document.createElement('div');
             toast.innerText = message;
             toast.style.position = 'fixed';
@@ -102,9 +117,9 @@
             toast.style.fontWeight = '600';
             toast.style.zIndex = '9999';
             toast.style.transition = 'opacity 0.4s ease';
-            
+
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 400);
@@ -114,4 +129,5 @@
     <script type="module" src="js/profile.js"></script>
 
 </body>
+
 </html>

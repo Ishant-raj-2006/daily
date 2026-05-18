@@ -79,8 +79,8 @@ input {
 
 input:focus {
     border-color: #a855f7;
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-    background: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+    background: rgba(15, 23, 42, 0.9);
 }
 
 button {
@@ -95,12 +95,12 @@ button {
     font-size: 16px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
 }
 
 button:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(236, 72, 153, 0.5);
+    box-shadow: 0 8px 25px rgba(236, 72, 153, 0.7), 0 0 15px rgba(168, 85, 247, 0.6);
 }
 
 button:active {
@@ -119,17 +119,22 @@ button:active {
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
     padding: 25px;
     margin-top: 20px;
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .card:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.4);
 }
 
 .card ul {

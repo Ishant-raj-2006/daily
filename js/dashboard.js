@@ -9,7 +9,8 @@ import {
     updateDoc,
     increment,
     deleteDoc,
-    onSnapshot
+    onSnapshot,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -17,6 +18,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 let currentUser = null;
+let allHabits = [];
+let todayCompletions = {};
 
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
@@ -47,6 +50,11 @@ window.showToast = function(message, color = "#10b981") {
     }, 2500);
 }
 
+function getLocalDateStr() {
+    const d = new Date();
+    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+}
+
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -63,21 +71,20 @@ addTaskBtn.addEventListener('click', async () => {
 
     try {
         addTaskBtn.innerText = '...';
-        await addDoc(collection(db, 'tasks'), {
+        await addDoc(collection(db, 'habits'), {
             userId: currentUser.uid,
             title,
-            completed: false,
-            failed: false,
+            deleted: false,
             createdAt: new Date().getTime()
         });
 
         taskInput.value = '';
         addTaskBtn.innerText = 'Add';
         
-        window.showToast("Your task added successfully! ✨", "#10b981");
+        window.showToast("Your habit added successfully! ✨", "#10b981");
         
     } catch (err) {
-        alert("Error adding task: " + err.message);
+        alert("Error adding habit: " + err.message);
         addTaskBtn.innerText = 'Add';
     }
 });
@@ -85,125 +92,185 @@ addTaskBtn.addEventListener('click', async () => {
 function setupRealtimeTasks() {
     taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">Loading...</p>';
     
-    const q = query(
-        collection(db, 'tasks'),
+    const todayStr = getLocalDateStr();
+
+    // 1. Listen to Habits
+    const qHabits = query(
+        collection(db, 'habits'),
         where('userId', '==', currentUser.uid)
     );
 
-    // FAST RESPONSE: Listen for real-time updates!
-    onSnapshot(q, (querySnapshot) => {
-        taskList.innerHTML = '';
-        let hasTasks = false;
-
-        // Convert to array and sort by createdAt descending (newest first)
-        const tasksArray = [];
+    onSnapshot(qHabits, (querySnapshot) => {
+        allHabits = [];
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
             if (data.deleted !== true) {
-                tasksArray.push({ id: docSnap.id, ...data });
+                allHabits.push({ id: docSnap.id, ...data });
             }
         });
+        allHabits.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        renderTasks();
+    });
 
-        tasksArray.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    // 2. Listen to Completions for Today
+    const qCompletions = query(
+        collection(db, 'completions'),
+        where('userId', '==', currentUser.uid),
+        where('date', '==', todayStr)
+    );
 
-        tasksArray.forEach((data) => {
-            hasTasks = true;
-            const div = document.createElement('div');
-            div.classList.add('card');
-            
-            let titleStyle = "width: 100%; word-wrap: break-word;";
-            let statusText = "";
-            let bgStyle = "background: rgba(255, 255, 255, 0.03);";
-            let actionArea = "";
-            
-            if (data.completed) {
-                titleStyle += " text-decoration: line-through; color: #10b981;";
-                statusText = `<span style="color:#10b981; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">COMPLETED ✅</span>`;
-                bgStyle = "background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);";
-                
-                // Show +1 Point badge instead of Delete button for completed tasks
-                actionArea = `
-                    <div style="width: 100%; text-align: right; margin-top: 10px;">
-                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(16, 185, 129, 0.4); display: inline-block;">
-                            +1 Point 🌟
-                        </span>
-                    </div>
-                `;
-
-            } else if (data.failed) {
-                titleStyle += " text-decoration: line-through; color: #f59e0b;";
-                statusText = `<span style="color:#f59e0b; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">MISSED ❌</span>`;
-                bgStyle = "background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);";
-                
-                // For failed tasks, show 0 Points badge
-                actionArea = `
-                    <div style="width: 100%; text-align: right; margin-top: 10px;">
-                        <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(245, 158, 11, 0.4); display: inline-block;">
-                            0 Points
-                        </span>
-                    </div>
-                `;
-
-            } else {
-                statusText = `<span style="color:#94a3b8; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">PENDING ⏳</span>`;
-                
-                // For pending tasks, show all buttons
-                actionArea = `
-                    <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap; margin-top: 10px;">
-                        <button onclick="completeTask('${data.id}')" style="flex: 1; min-width: 80px;">
-                          Done ✅
-                        </button>
-                        <button onclick="failTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
-                          Not ❌
-                        </button>
-                        <button onclick="deleteTask('${data.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                          Delete 🗑️
-                        </button>
-                    </div>
-                `;
-            }
-
-            div.style.cssText = `${bgStyle} padding: 20px; margin-top: 15px; border-radius: 18px; transition: transform 0.3s ease;`;
-
-            div.innerHTML = `
-              <div class="task" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                ${statusText}
-                <h3 style="${titleStyle}">${data.title}</h3>
-                ${actionArea}
-              </div>
-            `;
-            taskList.appendChild(div);
+    onSnapshot(qCompletions, (querySnapshot) => {
+        todayCompletions = {};
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            todayCompletions[data.habitId] = { id: docSnap.id, ...data };
         });
-
-        if (!hasTasks) {
-            taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">No tasks found. Add a new habit above! 🎉</p>';
-        }
+        renderTasks();
     });
 }
 
-window.completeTask = async (taskId) => {
+function renderTasks() {
+    taskList.innerHTML = '';
+    let hasTasks = false;
+
+    allHabits.forEach((habit) => {
+        hasTasks = true;
+        const completion = todayCompletions[habit.id];
+        const isCompleted = completion && completion.status === 'completed';
+        const isFailed = completion && completion.status === 'failed';
+
+        const div = document.createElement('div');
+        div.classList.add('card');
+        
+        let titleStyle = "width: 100%; word-wrap: break-word;";
+        let statusText = "";
+        let bgStyle = "background: rgba(255, 255, 255, 0.03);";
+        let actionArea = "";
+        
+        if (isCompleted) {
+            titleStyle += " text-decoration: line-through; color: #10b981;";
+            statusText = `<span style="color:#10b981; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">COMPLETED TODAY ✅</span>`;
+            bgStyle = "background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);";
+            
+            actionArea = `
+                <div style="width: 100%; text-align: right; margin-top: 10px;">
+                    <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(16, 185, 129, 0.4); display: inline-block;">
+                        +1 Point 🌟
+                    </span>
+                </div>
+            `;
+        } else if (isFailed) {
+            titleStyle += " text-decoration: line-through; color: #f59e0b;";
+            statusText = `<span style="color:#f59e0b; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">MISSED TODAY ❌</span>`;
+            bgStyle = "background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);";
+            
+            actionArea = `
+                <div style="width: 100%; text-align: right; margin-top: 10px;">
+                    <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid rgba(245, 158, 11, 0.4); display: inline-block;">
+                        0 Points
+                    </span>
+                </div>
+            `;
+        } else {
+            statusText = `<span style="color:#94a3b8; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">PENDING ⏳</span>`;
+            
+            actionArea = `
+                <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap; margin-top: 10px;">
+                    <button onclick="completeTask('${habit.id}')" style="flex: 1; min-width: 80px;">
+                      Done ✅
+                    </button>
+                    <button onclick="failTask('${habit.id}')" style="flex: 1; min-width: 80px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">
+                      Not ❌
+                    </button>
+                    <button onclick="deleteTask('${habit.id}')" style="flex: 1; min-width: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                      Delete 🗑️
+                    </button>
+                </div>
+            `;
+        }
+
+        div.style.cssText = `${bgStyle} padding: 20px; margin-top: 15px; border-radius: 18px; transition: transform 0.3s ease;`;
+
+        div.innerHTML = `
+          <div class="task" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+            ${statusText}
+            <h3 style="${titleStyle}">${habit.title}</h3>
+            ${actionArea}
+          </div>
+        `;
+        taskList.appendChild(div);
+    });
+
+    if (!hasTasks) {
+        taskList.innerHTML = '<p style="color: #94a3b8; text-align: left;">No habits found. Add a new habit above! 🎉</p>';
+    }
+}
+
+window.completeTask = async (habitId) => {
     try {
-        const taskRef = doc(db, 'tasks', taskId);
-        await updateDoc(taskRef, {
-            completed: true,
+        const todayStr = getLocalDateStr();
+        
+        // 1. Add Completion Record
+        await addDoc(collection(db, 'completions'), {
+            userId: currentUser.uid,
+            habitId: habitId,
+            date: todayStr,
+            status: 'completed',
             completedAt: new Date().getTime()
         });
 
+        // 2. Update Points & Proper Streak Logic
         const userRef = doc(db, 'users', currentUser.uid);
-        await updateDoc(userRef, {
-            points: increment(1) 
-        });
-        window.showToast("Awesome! +1 Point 🌟", "#10b981");
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+            const userData = userSnap.data();
+            let currentStreak = userData.streak || 0;
+            let bestStreak = userData.bestStreak || 0;
+            let lastCompletedDate = userData.lastCompletedDate || null;
+            let points = userData.points || 0;
+            
+            if (lastCompletedDate !== todayStr) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = new Date(yesterday.getTime() - (yesterday.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                
+                if (lastCompletedDate === yesterdayStr) {
+                    currentStreak += 1;
+                } else {
+                    currentStreak = 1; // reset streak if broken
+                }
+                
+                if (currentStreak > bestStreak) bestStreak = currentStreak;
+                
+                await updateDoc(userRef, {
+                    points: points + 1,
+                    streak: currentStreak,
+                    bestStreak: bestStreak,
+                    lastCompletedDate: todayStr
+                });
+                window.showToast(`Awesome! +1 Point 🌟 Streak: ${currentStreak} 🔥`, "#10b981");
+            } else {
+                await updateDoc(userRef, {
+                    points: points + 1
+                });
+                window.showToast("Awesome! +1 Point 🌟", "#10b981");
+            }
+        }
     } catch (err) {
         alert("Error completing task: " + err.message);
     }
 };
 
-window.failTask = async (taskId) => {
+window.failTask = async (habitId) => {
     try {
-        const taskRef = doc(db, 'tasks', taskId);
-        await updateDoc(taskRef, {
-            failed: true 
+        const todayStr = getLocalDateStr();
+        await addDoc(collection(db, 'completions'), {
+            userId: currentUser.uid,
+            habitId: habitId,
+            date: todayStr,
+            status: 'failed',
+            completedAt: new Date().getTime()
         });
         window.showToast("Task Missed! Graph % went down 📉", "#f59e0b");
     } catch (err) {
@@ -211,13 +278,15 @@ window.failTask = async (taskId) => {
     }
 };
 
-window.deleteTask = async (taskId) => {
-    if(!confirm("Are you sure you want to delete this task? It will be completely removed.")) return;
+window.deleteTask = async (habitId) => {
+    if(!confirm("Are you sure you want to delete this habit? History will be kept.")) return;
     try {
-        await deleteDoc(doc(db, 'tasks', taskId));
-        window.showToast("Task Deleted 🗑️", "#ef4444");
+        // Soft delete to maintain history for completions
+        const habitRef = doc(db, 'habits', habitId);
+        await updateDoc(habitRef, { deleted: true });
+        window.showToast("Habit Deleted 🗑️", "#ef4444");
     } catch (err) {
-        alert("Error deleting task: " + err.message);
+        alert("Error deleting habit: " + err.message);
     }
 };
 
@@ -227,6 +296,9 @@ function setupRealtimeUser() {
         if (docSnap.exists()) {
             const data = docSnap.data();
             pointsEl.innerText = data.points || 0;
+            
+            // If there's a streak element on dashboard, we can update it here too.
+            // Example: if (document.getElementById('streak')) document.getElementById('streak').innerText = data.streak || 0;
         }
     });
 }

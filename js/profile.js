@@ -1,4 +1,4 @@
-import { auth, db } from './firebase.js';
+import { auth, db, storage } from './firebase.js';
 
 import {
     collection,
@@ -17,6 +17,12 @@ import {
     signOut,
     deleteUser
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 let currentUser = null;
 let profileData = null;
@@ -39,15 +45,26 @@ onAuthStateChanged(auth, (user) => {
                 
                 document.getElementById('name').innerText = data.name || 'Anonymous Grinder';
                 document.getElementById('username').innerText = '@' + getUsername(data.email);
-                document.getElementById('email').innerText = data.email || 'No Email';
+                document.getElementById('email').innerText = data.email || 'N/A';
                 document.getElementById('phone').innerText = data.phone || 'N/A';
-                document.getElementById('joinDate').innerText = data.joinDate || 'N/A';
                 
-                // Add Current Date as requested
-                const today = new Date().toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric'
-                });
-                document.getElementById('currentDate').innerText = today;
+                let jDateStr = data.joinDate;
+                if (jDateStr) {
+                    let d = new Date(jDateStr);
+                    if (!isNaN(d)) {
+                        let dd = String(d.getDate()).padStart(2, '0');
+                        let mm = String(d.getMonth() + 1).padStart(2, '0');
+                        let yyyy = d.getFullYear();
+                        jDateStr = `${dd}/${mm}/${yyyy}`;
+                    }
+                }
+                document.getElementById('joinDate').innerText = jDateStr || 'N/A';
+                
+                const d2 = new Date();
+                let dd2 = String(d2.getDate()).padStart(2, '0');
+                let mm2 = String(d2.getMonth() + 1).padStart(2, '0');
+                let yy = String(d2.getFullYear()).slice(-2);
+                document.getElementById('currentDate').innerText = `${dd2}/${mm2}/${yy}`;
                 
                 document.getElementById('points').innerText = data.points || 0;
                 
@@ -59,7 +76,6 @@ onAuthStateChanged(auth, (user) => {
             }
         });
 
-        // Setup real-time charts based on REAL tasks data!
         setupRealtimeGraph();
         setupRealtimeHeatmap();
 
@@ -68,37 +84,95 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Update Profile Photo
-document.getElementById('updatePhotoBtn').addEventListener('click', async () => {
-    const photoUrl = document.getElementById('photoUrlInput').value.trim();
-    if (!photoUrl) {
-        window.showToast("Please enter a valid image URL!", "#ef4444");
-        return;
-    }
-    if (!currentUser) return;
-    try {
-        const btn = document.getElementById('updatePhotoBtn');
-        btn.innerText = '...';
-        const userRef = doc(db, 'users', currentUser.uid);
-        await updateDoc(userRef, { profilePhoto: photoUrl });
-        document.getElementById('photoUrlInput').value = '';
-        btn.innerText = 'Saved ✅';
-        window.showToast("Profile Photo Updated!", "#10b981");
-        setTimeout(() => { btn.innerText = 'Save'; }, 2000);
-    } catch (err) {
-        window.showToast("Error updating photo: " + err.message, "#ef4444");
+// Toggle Photo Menu
+const photoMenu = document.getElementById('photoMenu');
+const updatePhotoCard = document.getElementById('updatePhotoCard');
+
+document.getElementById('profilePhoto').addEventListener('click', () => {
+    photoMenu.style.display = photoMenu.style.display === 'none' || photoMenu.style.display === '' ? 'block' : 'none';
+});
+
+// Close menu if clicked outside
+document.addEventListener('click', (e) => {
+    if (e.target.id !== 'profilePhoto' && !photoMenu.contains(e.target)) {
+        photoMenu.style.display = 'none';
     }
 });
 
-// REAL-TIME Weekly Performance Chart (Percentage % Completed)
+// Show Update Photo Form
+document.getElementById('menuUpdatePhoto').addEventListener('click', () => {
+    photoMenu.style.display = 'none';
+    updatePhotoCard.style.display = 'block';
+});
+
+// Handle Delete Photo
+document.getElementById('menuDeletePhoto').addEventListener('click', async () => {
+    photoMenu.style.display = 'none';
+    if (!currentUser) return;
+    
+    if (confirm("Are you sure you want to delete your profile photo?")) {
+        try {
+            const userRef = doc(db, 'users', currentUser.uid);
+            await updateDoc(userRef, { profilePhoto: null });
+            window.showToast("Profile Photo Deleted 🗑️", "#ef4444");
+        } catch(err) {
+            window.showToast("Error deleting photo: " + err.message, "#ef4444");
+        }
+    }
+});
+
+// Update Profile Photo via File Upload (Storage)
+document.getElementById('updatePhotoBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('photoFileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        window.showToast("Please select an image file first!", "#ef4444");
+        return;
+    }
+    if (!currentUser) return;
+    
+    try {
+        const btn = document.getElementById('updatePhotoBtn');
+        btn.innerText = 'Uploading...';
+        btn.disabled = true;
+        
+        // Upload to Firebase Storage
+        const fileExt = file.name.split('.').pop();
+        const storageRef = ref(storage, `profilePhotos/${currentUser.uid}_${Date.now()}.${fileExt}`);
+        await uploadBytes(storageRef, file);
+        
+        // Get URL and update Firestore
+        const photoUrl = await getDownloadURL(storageRef);
+        const userRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userRef, { profilePhoto: photoUrl });
+        
+        fileInput.value = '';
+        btn.innerText = 'Saved ✅';
+        window.showToast("Profile Photo Updated!", "#10b981");
+        
+        setTimeout(() => { 
+            btn.innerText = 'Upload'; 
+            btn.disabled = false;
+            updatePhotoCard.style.display = 'none';
+        }, 2000);
+        
+    } catch (err) {
+        window.showToast("Error updating photo: " + err.message, "#ef4444");
+        const btn = document.getElementById('updatePhotoBtn');
+        btn.innerText = 'Upload';
+        btn.disabled = false;
+    }
+});
+
+// REAL-TIME Weekly Performance Chart (Tasks Completed)
 function setupRealtimeGraph() {
     const q = query(
-        collection(db, 'tasks'),
+        collection(db, 'completions'),
         where('userId', '==', currentUser.uid)
     );
 
     onSnapshot(q, (snapshot) => {
-        const totalTasks = [0, 0, 0, 0, 0, 0, 0];
         const completedTasks = [0, 0, 0, 0, 0, 0, 0];
 
         const now = new Date();
@@ -110,28 +184,18 @@ function setupRealtimeGraph() {
         startOfWeek.setHours(0, 0, 0, 0);
 
         snapshot.forEach(docSnap => {
-            const task = docSnap.data();
+            const data = docSnap.data();
             
-            // Only count if within current week and not explicitly deleted
-            if (task.createdAt && task.createdAt >= startOfWeek.getTime() && task.deleted !== true) {
-                const date = new Date(task.createdAt);
+            // Only count if status is completed and within current week
+            if (data.status === 'completed' && data.completedAt && data.completedAt >= startOfWeek.getTime()) {
+                const date = new Date(data.completedAt);
                 let day = date.getDay() - 1;
                 if (day === -1) day = 6;
-                
-                totalTasks[day]++;
-                if (task.completed === true) {
-                    completedTasks[day]++;
-                }
+                completedTasks[day]++;
             }
         });
 
-        // Calculate percentage for each day
-        const percentageData = totalTasks.map((total, index) => {
-            if (total === 0) return 0;
-            return Math.round((completedTasks[index] / total) * 100);
-        });
-
-        initWeeklyChart(percentageData);
+        initWeeklyChart(completedTasks);
     });
 }
 
@@ -147,7 +211,7 @@ function initWeeklyChart(dataArray) {
         data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             datasets: [{
-                label: 'Task Completion (%)',
+                label: 'Tasks Completed',
                 data: dataArray,
                 backgroundColor: 'rgba(168, 85, 247, 0.8)',
                 borderColor: '#a855f7',
@@ -160,11 +224,10 @@ function initWeeklyChart(dataArray) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: 100,
                     grid: { color: 'rgba(255,255,255,0.1)' },
                     ticks: { 
                         color: '#cbd5e1',
-                        callback: function(value) { return value + "%"; }
+                        stepSize: 1
                     }
                 },
                 x: {
@@ -176,7 +239,7 @@ function initWeeklyChart(dataArray) {
                 legend: { labels: { color: '#f8fafc' } },
                 tooltip: {
                     callbacks: {
-                        label: function(context) { return context.parsed.y + '% Completed'; }
+                        label: function(context) { return context.parsed.y + ' Tasks Completed'; }
                     }
                 }
             }
@@ -187,7 +250,7 @@ function initWeeklyChart(dataArray) {
 // REAL-TIME GitHub Style Heatmap
 function setupRealtimeHeatmap() {
     const q = query(
-        collection(db, 'tasks'),
+        collection(db, 'completions'),
         where('userId', '==', currentUser.uid)
     );
 
@@ -195,12 +258,9 @@ function setupRealtimeHeatmap() {
         const activityMap = {}; 
         
         snapshot.forEach(docSnap => {
-            const task = docSnap.data();
-            if (task.completed && task.completedAt) {
-                const d = new Date(task.completedAt);
-                // Adjust for timezone offset to get local YYYY-MM-DD
-                const dateStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                activityMap[dateStr] = (activityMap[dateStr] || 0) + 1;
+            const data = docSnap.data();
+            if (data.status === 'completed' && data.date) {
+                activityMap[data.date] = (activityMap[data.date] || 0) + 1;
             }
         });
 

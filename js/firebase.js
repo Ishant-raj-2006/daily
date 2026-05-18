@@ -8,6 +8,10 @@ import {
     getFirestore
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import {
+    getStorage
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 const firebaseConfig = {
     apiKey: "AIzaSyBQhGn6FZPRFQ4rhdYy7iaYC5kO9xWzpds",
     authDomain: "daily-routing.firebaseapp.com",
@@ -21,3 +25,4 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
